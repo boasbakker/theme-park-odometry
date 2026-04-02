@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from matplotlib.widgets import Slider
+from matplotlib.widgets import Slider, CheckButtons
 import time
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -114,6 +114,7 @@ def main():
                 self.total_duration = 1.0
             self.start_time = time.time()
             self.speed_multiplier = 1.0
+            self.show_circle = True
 
     anim_state = AnimationState(t)
 
@@ -132,7 +133,7 @@ def main():
         point.set_data([x[frame_index]], [y[frame_index]])
         point.set_3d_properties([z[frame_index]])
 
-        if circle_data['R'] is not None and frame_index < len(circle_data['R']):
+        if anim_state.show_circle and circle_data['R'] is not None and frame_index < len(circle_data['R']):
             R_val = circle_data['R'][frame_index]
             if not np.isnan(R_val) and R_val < 500:
                 P_curr = np.array([x[frame_index], y[frame_index], z[frame_index]])
@@ -169,6 +170,17 @@ def main():
         anim_state.speed_multiplier = val
 
     speed_slider.on_changed(update_speed)
+
+    ax_toggle = fig.add_axes([0.02, 0.1, 0.15, 0.05])
+    circle_toggle = CheckButtons(ax_toggle, ['Show Radius'], [True])
+
+    def toggle_circle(label):
+        anim_state.show_circle = not anim_state.show_circle
+        if not anim_state.show_circle:
+            circle_line.set_data([], [])
+            circle_line.set_3d_properties([])
+
+    circle_toggle.on_clicked(toggle_circle)
 
     plt.show()
 

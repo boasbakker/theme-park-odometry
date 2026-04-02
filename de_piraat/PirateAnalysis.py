@@ -14,13 +14,8 @@ eindIndex = 17500 # Vanaf waar eindigen de metingen? (0 voor meenemen elke metin
 # beginIndex 12626
 # eindIndex 13386
 
-# Voor metingen Formule X:
-# begin: 3000
-# eind: 7200
 
 # Periode piraat = 7.61
-# beginpunten piraat emma:
-# 5225, 5598, 5985
 
 accelerometerPath = "/home/frank/Documents/TN_Jaar1/Inleidend_Practicum_1/Finn-Piraat1/Accelerometer.csv"
 orientationPath = "/home/frank/Documents/TN_Jaar1/Inleidend_Practicum_1/Finn-Piraat1/Orientation.csv"
@@ -35,9 +30,9 @@ plotCalculatedVelocities = False # Moet de snelheid in een aparte grafiek?
 plotAcceleration = False # Moet de (geroteerde) acceleratie geplot worden?
 plotAbsVelocity = False # Moet de berekende absolute snelheid geplot worden?
 plotAbsAcceleration = False # Moet de absolute acceleratie geplot worden?
-plotEnergies = True # Moet de totale energie geplot worden?
-plotOrientation = True # Moet de telefoonorientatie (volgens Phyphox) getoond worden?
-plot2DPath = False
+plotEnergies = False # Moet de totale energie geplot worden?
+plotOrientation = False # Moet de telefoonorientatie (volgens Phyphox) getoond worden?
+plot2DPath = True
 plotCalculatedRadii = False
 
 
@@ -45,36 +40,6 @@ accelCorrection = numpy.array([0., 0., 0.]) # Acceleratiecorrectie in absoluut v
 velCorrectie = numpy.array([0., 0., 0.])
 phoneAccelCorrectie = numpy.array([0., 0., 0.]) # Theoretisch. Zou zeer hip zijn als het werkt. Gaat komen.
 
-
-# Script van Boas voor gelijke plots -----
-
-textscaling = 1.5
-plt.rcParams.update({
-    # Figure
-    'figure.figsize': (10, 6),
-    'figure.dpi': 600,
-
-    # Tick labels
-    'xtick.labelsize': 10 * textscaling,
-    'ytick.labelsize': 10 * textscaling,
-
-    # Axis labels & title
-    'axes.labelsize': 12 * textscaling,
-    'axes.titlesize': 14 * textscaling,
-
-    # Legend
-    'legend.fontsize': 10 * textscaling,
-
-    # Grid
-    'axes.grid': True,
-    'grid.linestyle': ':',
-    'grid.alpha': 0.6,
-
-    # Line defaults
-    'lines.linewidth': 2,
-})
-
-# ------------
 
 
 vel0 = numpy.array((0., 0., 0.)) # Beginsnelheid
@@ -386,7 +351,7 @@ if plotCalculatedVelocities:
     plt.legend()
 
 if plotAcceleration:
-    accelPlot = plt.figure()
+    accelPlot = plt.figure(figsize=(10, 6))
     plt.scatter(timeList, numpy.transpose(numpy.transpose(accelList)[0]), color='blue', label='x', marker='.', alpha=0.3, rasterized=True)
     plt.scatter(timeList, numpy.transpose(numpy.transpose(accelList)[1]), color='orange', label='y', marker='.', alpha=0.3, rasterized=True)
     plt.scatter(timeList, numpy.transpose(numpy.transpose(accelList)[2]), color='green', label='z', marker='.', alpha=0.3, rasterized=True)
@@ -394,6 +359,7 @@ if plotAcceleration:
     plt.ylabel("$a$ [m/s$^2$]")
     plt.legend()
     updatePlotStyle(1.5)
+    plt.grid()
     plt.savefig("Raw Acceleration measured by phone vs Time, alpha 0.3.pdf", format='pdf')
 
 if plot2DPath:
@@ -419,6 +385,7 @@ if plot2DPath:
     plt.ylabel("$Height$ [m]")
     plt.legend()
     updatePlotStyle(1.5)
+    plt.grid()
     plt.savefig("flattened_path_piraat_fit.pdf", format='pdf')
 
 if plotCalculatedRadii:
@@ -494,14 +461,16 @@ if plotOrientation:
     #plt.plot(timeList[:len(orientationList.transpose()[2])], orientationList.transpose()[2], marker='.', label='y', color='orange', rasterized=True)
     #plt.plot(timeList[:len(orientationList.transpose()[3])], orientationList.transpose()[3], marker='.', label='z', color='green', rasterized=True)
 
-    plt.plot(timeList[:len(orientationList.transpose()[1])], roll, marker='.', label='Roll', color='blue', rasterized=True)
-    plt.plot(timeList[:len(orientationList.transpose()[2])], pitch, marker='.', label='Pitch', color='orange', rasterized=True)
-    plt.plot(timeList[:len(orientationList.transpose()[3])], yaw, marker='.', label='Yaw', color='green', rasterized=True)
+    plt.plot(timeList[:len(orientationList.transpose()[1])], roll, label='Roll', color='blue', rasterized=True)
+    plt.plot(timeList[:len(orientationList.transpose()[2])], pitch, label='Pitch', color='orange', rasterized=True)
+    plt.plot(timeList[:len(orientationList.transpose()[3])], yaw, label='Yaw', color='green', rasterized=True)
 
     plt.xlabel("$t$ [s]")
     plt.ylabel("Angle [rad]")
    
     plt.legend()
+    plt.grid()
+    updatePlotStyle(1.5)
     plt.savefig("Raw Orientation piraat vs time euler.pdf", format='pdf')
 
 if plotEnergies:
@@ -525,11 +494,11 @@ if plotEnergies:
     
     
     #plt.vlines(ts, 0, 50)
-    plt.plot(timeList, numpy.add(E_pot, -0*yTest), color='blue', label='Uncorrected gravitational', rasterized=True)
-    plt.plot(ts, ps, 'r.', markersize=15, label="Gravitational minima")
-    #plt.plot(timeList, E_kin, color='blue', label='Kinetic', rasterized=True)
-    #plt.plot(timeList, numpy.add(numpy.add(E_kin, E_pot), -1 * yTest), color='green', linestyle='--', label='Total', rasterized=True)
-    plt.plot(timeList, yTest, 'k--', label='Curve Fit through minima', rasterized=True)
+    plt.plot(timeList, numpy.add(E_pot, -1*yTest), color='orange', label='Corrected gravitational', rasterized=True)
+    #plt.plot(ts, ps, 'r.', markersize=15, label="Gravitational minima")
+    plt.plot(timeList, E_kin, color='blue', label='Kinetic', rasterized=True)
+    plt.plot(timeList, numpy.add(numpy.add(E_kin, E_pot), -1 * yTest), color='green', linestyle='--', label='Total', rasterized=True)
+    #plt.plot(timeList, yTest, 'k--', label='Curve Fit through minima', rasterized=True)
     
     legend = plt.legend() 
     for handle in legend.legend_handles:
@@ -538,7 +507,8 @@ if plotEnergies:
     plt.xlabel("$t$ [s]")
     plt.ylabel("$E/m$ [m$^2$/s$^2$]")
     updatePlotStyle(1.5)
-    plt.savefig("correction_plot_piraat_potential.pdf", format='pdf')
+    plt.grid()
+    plt.savefig("plot_piraat_energie.pdf", format='pdf')
 
 
 

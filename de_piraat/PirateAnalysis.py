@@ -17,8 +17,8 @@ eindIndex = 17500 # Vanaf waar eindigen de metingen? (0 voor meenemen elke metin
 
 # Periode piraat = 7.61
 
-accelerometerPath = "/home/frank/Documents/TN_Jaar1/Inleidend_Practicum_1/Finn-Piraat1/Accelerometer.csv"
-orientationPath = "/home/frank/Documents/TN_Jaar1/Inleidend_Practicum_1/Finn-Piraat1/Orientation.csv"
+accelerometerPath = "data_raw/Accelerometer.csv"
+orientationPath = "data_raw/Orientation.csv"
 
 g = 9.81
 roundingDecimals = 8
@@ -27,12 +27,12 @@ useRotation = True # Moet de inverse telefoonrotatie gebruikt worden?
 useCorrection = True # Moet er gecorrigeerd worden, zodat beginpositie gelijk is aan eindpositie?
 plotCalculatedPositions = False # Moet er een grafiek gemaakt worden van de posities?
 plotCalculatedVelocities = False # Moet de snelheid in een aparte grafiek?
-plotAcceleration = False # Moet de (geroteerde) acceleratie geplot worden?
+plotAcceleration = True # Moet de (geroteerde) acceleratie geplot worden?
 plotAbsVelocity = False # Moet de berekende absolute snelheid geplot worden?
 plotAbsAcceleration = False # Moet de absolute acceleratie geplot worden?
 plotEnergies = False # Moet de totale energie geplot worden?
 plotOrientation = False # Moet de telefoonorientatie (volgens Phyphox) getoond worden?
-plot2DPath = True
+plot2DPath = False
 plotCalculatedRadii = False
 
 
@@ -325,6 +325,7 @@ def updatePlotStyle(textScaling):
         'axes.grid': True,
         'lines.linewidth': 0.5,
         'lines.markersize': 2,
+        'figure.dpi': 600
     })
 
 if plotCalculatedPositions:
@@ -352,12 +353,15 @@ if plotCalculatedVelocities:
 
 if plotAcceleration:
     accelPlot = plt.figure(figsize=(10, 6))
-    plt.scatter(timeList, numpy.transpose(numpy.transpose(accelList)[0]), color='blue', label='x', marker='.', alpha=0.3, rasterized=True)
-    plt.scatter(timeList, numpy.transpose(numpy.transpose(accelList)[1]), color='orange', label='y', marker='.', alpha=0.3, rasterized=True)
-    plt.scatter(timeList, numpy.transpose(numpy.transpose(accelList)[2]), color='green', label='z', marker='.', alpha=0.3, rasterized=True)
+    plt.scatter(timeList, numpy.transpose(numpy.transpose(accelList)[0]), color='blue', label='x', marker='.', alpha=0.5, rasterized=True, linewidth=0)
+    plt.scatter(timeList, numpy.transpose(numpy.transpose(accelList)[1]), color='orange', label='y', marker='.', alpha=0.5, rasterized=True, linewidth=0)
+    plt.scatter(timeList, numpy.transpose(numpy.transpose(accelList)[2]), color='green', label='z', marker='.', alpha=0.5, rasterized=True, linewidth=0)
     plt.xlabel("$t$ [s]")
     plt.ylabel("$a$ [m/s$^2$]")
-    plt.legend()
+    legend = plt.legend(markerscale=3)
+
+    for handle in legend.legend_handles:
+        handle.set_alpha(1)
     updatePlotStyle(1.5)
     plt.grid()
     plt.savefig("Raw Acceleration measured by phone vs Time, alpha 0.3.pdf", format='pdf')
@@ -378,12 +382,15 @@ if plot2DPath:
     fitHeights = halfCircleFit(dTest, dCenter, zCenter, radius)
 
     path2Dplot = plt.figure(figsize=(10, 6))
-    plt.scatter(dList, zList, label='Calculated Positions', color='green', alpha=0.3, rasterized=True)
+    plt.scatter(dList, zList, label='Calculated Positions', color='green', alpha=0.5, rasterized=True, linewidth=0)
     plt.plot(dTest, fitHeights, color='black', linestyle='--', label=('Circular Fit, r = ' + str(round(radius, 1)) + ' m'), rasterized=True)
 
     plt.xlabel("$x$ [m]")
     plt.ylabel("$Height$ [m]")
-    plt.legend()
+    legend = plt.legend(markerscale=3)
+
+    for handle in legend.legend_handles:
+        handle.set_alpha(1)
     updatePlotStyle(1.5)
     plt.grid()
     plt.savefig("flattened_path_piraat_fit.pdf", format='pdf')
@@ -424,13 +431,16 @@ if plotCalculatedRadii:
     print(calculatedRadius)
 
     radiiPlot = plt.figure(figsize=(10, 6))
-    plt.scatter(timeList, radii, label='Calculated Radii', color='blue')
+    plt.scatter(timeList, radii, label='Calculated Radii', color='blue', linewidth=0, alpha=0.5, rasterized=True)
     plt.vlines(timeList[s1], 0, 50)
     plt.vlines(timeList[s2], 0, 50)
 
     plt.xlabel("$t$ [s]")
     plt.ylabel("$R$ [m]")
-    plt.legend()
+    legend = plt.legend(markerscale=3)
+
+    for handle in legend.legend_handles:
+        handle.set_alpha(1)
     updatePlotStyle(1.5)
 
 if plotAbsVelocity:

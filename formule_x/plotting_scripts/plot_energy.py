@@ -11,9 +11,8 @@ plt.rcParams.update({
     'axes.titlesize': 14 * textscaling,
     'legend.fontsize': 10 * textscaling,
     'axes.grid': True,
-    'grid.linestyle': ':',
-    'grid.alpha': 0.6,
     'lines.linewidth': 2,
+    'lines.markersize': 2,
     'figure.dpi': 600
 })
 

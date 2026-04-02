@@ -7,15 +7,15 @@ from scipy.optimize import curve_fit
 
 # Frank de Kogel, 19/09/2025
 
-beginIndex = 7000 # Vanaf welke index beginnen de metingen pas? 12623
-eindIndex = 17500 # Vanaf waar eindigen de metingen? (0 voor meenemen elke meting) 13387
+beginIndex = 7000 # From which index do measurements actually begin? 12623
+eindIndex = 17500 # Where do the measurements end? (0 to include every measurement) 13387
 
-# Een mooi boogje van finn's metingen:
+# A nice arc from Finn's measurements:
 # beginIndex 12626
 # eindIndex 13386
 
 
-# Periode piraat = 7.61
+# Period pirate = 7.61
 
 accelerometerPath = "data_raw/Accelerometer.csv"
 orientationPath = "data_raw/Orientation.csv"
@@ -23,42 +23,42 @@ orientationPath = "data_raw/Orientation.csv"
 g = 9.81
 roundingDecimals = 8
 
-useRotation = True # Moet de inverse telefoonrotatie gebruikt worden?
-useCorrection = True # Moet er gecorrigeerd worden, zodat beginpositie gelijk is aan eindpositie?
-plotCalculatedPositions = False # Moet er een grafiek gemaakt worden van de posities?
-plotCalculatedVelocities = False # Moet de snelheid in een aparte grafiek?
-plotAcceleration = True # Moet de (geroteerde) acceleratie geplot worden?
-plotAbsVelocity = False # Moet de berekende absolute snelheid geplot worden?
-plotAbsAcceleration = False # Moet de absolute acceleratie geplot worden?
-plotEnergies = False # Moet de totale energie geplot worden?
-plotOrientation = False # Moet de telefoonorientatie (volgens Phyphox) getoond worden?
+useRotation = True # Should the inverse phone rotation be used?
+useCorrection = True # Should corrections be applied so that the start position equals the end position?
+plotCalculatedPositions = False # Should a graph of the positions be created?
+plotCalculatedVelocities = False # Should the velocity be in a separate graph?
+plotAcceleration = True # Should the (rotated) acceleration be plotted?
+plotAbsVelocity = False # Should the calculated absolute velocity be plotted?
+plotAbsAcceleration = False # Should the absolute acceleration be plotted?
+plotEnergies = False # Should the total energy be plotted?
+plotOrientation = False # Should the phone orientation (according to Phyphox) be shown?
 plot2DPath = False
 plotCalculatedRadii = False
 
 
-accelCorrection = numpy.array([0., 0., 0.]) # Acceleratiecorrectie in absoluut vlak
+accelCorrection = numpy.array([0., 0., 0.]) # Acceleration correction in absolute plane
 velCorrectie = numpy.array([0., 0., 0.])
-phoneAccelCorrectie = numpy.array([0., 0., 0.]) # Theoretisch. Zou zeer hip zijn als het werkt. Gaat komen.
+phoneAccelCorrectie = numpy.array([0., 0., 0.]) # Theoretical. Would be very cool if it works. To be added.
 
 
 
-vel0 = numpy.array((0., 0., 0.)) # Beginsnelheid
+vel0 = numpy.array((0., 0., 0.)) # Initial velocity
 
-pos0 = numpy.array((0., 0., 0.)) # Beginpositie
+pos0 = numpy.array((0., 0., 0.)) # Initial position
 
 def transformRotation(phoneAccel, orientation):
 
-    # Vorm data:
+    # Data shape:
     # phoneAccel = [phoneAccelX, phoneAccelY, phoneAccelZ]
     # orientation = [wQuaternion, xQuaternion, yQuaternion, zQuaternion]
 
-    # Ik heb hier een goede twintig (correctie veertig) uur aan besteed, omdat quaternionen en relatieve hoeken een gruwel zijn.
+    # I spent a good twenty (correction: forty) hours on this, because quaternions and relative angles are an abomination.
 
-    # Deze functie dient om de (met de telefoon meedraaiende) XYZ-assen te mappen naar stationaire (aan de aarde vastgekoppelde) assen.
-    # Ik heb getracht dit te bereiken met orientatiehoeken, yaw, pitch, roll, ik had op een gegeven moment negenentwintig trigonometriefuncties in een enkele vector.
-    # Poog niet dit te begrijpen, het is lastig.
+    # This function serves to map the XYZ axes (rotating with the phone) to stationary axes (fixed to the earth).
+    # I tried to achieve this with orientation angles, yaw, pitch, roll, and at one point had twenty-nine trigonometric functions in a single vector.
+    # Do not attempt to understand this, it is difficult.
 
-    # Dank aan de tientallen helden op de wiskundestackoverflow, die mij met quaternionen hebben geholpen door vragen van acht jaar geleden
+    # Thanks to the numerous heroes on math stackoverflow, who helped me with quaternions through questions from eight years ago
 
 
     # W = cos (0.5 × totale hoek)
@@ -74,12 +74,12 @@ def transformRotation(phoneAccel, orientation):
                                      2 * (orientation[2] * orientation[3] - orientation[0] * orientation[1])],
                                     [2 * (orientation[1] * orientation[3] - orientation[0] * orientation[2]),
                                      2 * (orientation[2] * orientation[3] + orientation[0] * orientation[1]),
-                                     2 * (orientation[0] * orientation[0] + orientation[3] * orientation[3]) - 1]]) # Yep, ziet er leuk uit he!
+                                     2 * (orientation[0] * orientation[0] + orientation[3] * orientation[3]) - 1]]) # Yep, looks nice doesn't it!
 
     rotatieMatrix = numpy.transpose(rotatieMatrix) 
     convertedVector = numpy.array([0.0, 0.0, 0.0])
    
-    numpy.vecmat(phoneAccel, rotatieMatrix, out=convertedVector) # Hier wordt de matrix van de telefoon gedraaid zodat de Z-as boven staat.
+    numpy.vecmat(phoneAccel, rotatieMatrix, out=convertedVector) # Here the phone's matrix is rotated so that the Z-axis is pointing up.
 
     return convertedVector
 
@@ -88,45 +88,45 @@ def parseRawData(accelerometerPath, orientationPath, afronding, g, accelCorrecti
     global eindIndex
     global beginIndex
 
-    with open(accelerometerPath, 'r') as accelerationRawDataFile: # Opent het accelerometerbestand van phyphox
-        accelerationRawData = accelerationRawDataFile.read() # Leest het databestand
+    with open(accelerometerPath, 'r') as accelerationRawDataFile: # Opens the accelerometer file from phyphox
+        accelerationRawData = accelerationRawDataFile.read() # Reads the data file
    
     with open(orientationPath, 'r') as orientationRawDataFile:
         orientationRawData = orientationRawDataFile.read()
    
-    # Data geacquisitieerd
+    # Data acquired
 
-    timeList = numpy.array([0]) # Lijsten om data in te stoppen
+    timeList = numpy.array([0]) # Lists to store data in
 
-    phoneAccelList = numpy.array([[0, 0, -9.81]]) # Acceleratie is nodig om snelheid en positie te meten
+    phoneAccelList = numpy.array([[0, 0, -9.81]]) # Acceleration is needed to measure velocity and position
 
-    orientationList = numpy.array([[0, 0, 0, 0]]) # Lijsten voor orientatiequaternionen (dat is een nieuw begrip, ik hoop dat het werkt) (het werkte!)
+    orientationList = numpy.array([[0, 0, 0, 0]]) # Lists for orientation quaternions (that is a new concept, I hope it works) (it worked!)
 
-    netAccelList = numpy.array([accelCorrectie]) # Bijhouden alle acceleraties
+    netAccelList = numpy.array([accelCorrectie]) # Keep track of all accelerations
 
     absAccelList = numpy.array([0])
 
     velocity = numpy.array([0., 0., 0.])
    
     for i in range(len(vel0)):
-        velocity[i] = vel0[i] # Variabele om de huidige snelheid te bepalen
+        velocity[i] = vel0[i] # Variable to determine current velocity
 
-    velocityList = numpy.array([velocity]) # Lijst om de snelheden bij te houden
+    velocityList = numpy.array([velocity]) # List to keep track of velocities
 
     absVelocityList = numpy.array([0])
 
     pos = numpy.array([0., 0., 0.])
 
     for i in range(len(beginPos)):
-        pos[i] = beginPos[i] # Huidige positie
+        pos[i] = beginPos[i] # Current position
 
-    posList = numpy.array([beginPos]) # Lijst om positie bij te houden
+    posList = numpy.array([beginPos]) # List to keep track of position
 
-    # Extraheer de acceleratiemetingen:
+    # Extract the acceleration measurements:
 
-    for line in accelerationRawData.split("\n"): # Splitst de ruwe data in meetpunten
-        try: # Er moet een 'try' in gegooid worden, want bovenaan de data staat tekst.
-            # Formaat:
+    for line in accelerationRawData.split("\n"): # Splits the raw data into measurement points
+        try: # A 'try' must be used, because there is text at the top of the data.
+            # Format:
             # "Time (s)","Acceleration x (m/s^2)","Acceleration y (m/s^2)","Acceleration z (m/s^2)"
 
             metingTijd = round(float(line.split(",")[0]), afronding)
@@ -134,7 +134,7 @@ def parseRawData(accelerometerPath, orientationPath, afronding, g, accelCorrecti
             yAcceleratie = round(float(line.split(",")[2]), afronding)
             zAcceleratie = round(float(line.split(",")[3]), afronding)
 
-            timeList = numpy.append(timeList, metingTijd) # Sla de meting op
+            timeList = numpy.append(timeList, metingTijd) # Save the measurement
             phoneAccelList = numpy.vstack([phoneAccelList, numpy.array([xAcceleratie, yAcceleratie, zAcceleratie])])
 
 
@@ -147,32 +147,32 @@ def parseRawData(accelerometerPath, orientationPath, afronding, g, accelCorrecti
             orientationList = numpy.vstack([orientationList, numpy.array([float(line.split(",")[1]),
                                                                         float(line.split(",")[2]),
                                                                         float(line.split(",")[3]),
-                                                                        float(line.split(",")[4])])]) # Toevoegen van de orientatie
+                                                                        float(line.split(",")[4])])]) # Adding the orientation
            
-        except: # Voor als er tekst (ieuw) in de data staat
+        except: # In case there is text (ew) in the data
             pass
    
-    # Alle metingen zijn nu opgeslagen
+    # All measurements are now saved
 
-    # Nu moeten de metingen worden 'geknipt' naar de hoeveelheid data die ook echt gebruikt gaat worden
+    # Now the measurements need to be 'cut' to the amount of data that will actually be used
 
 
 
-    if eindIndex == 0: # Gebruik alle metingen
-        eindIndex = min(len(timeList), len(phoneAccelList), len(orientationList)) - 1 # kortste lijst
+    if eindIndex == 0: # Use all measurements
+        eindIndex = min(len(timeList), len(phoneAccelList), len(orientationList)) - 1 # shortest list
 
     phoneAccelList = phoneAccelList[beginIndex:eindIndex]
     orientationList = orientationList[beginIndex:eindIndex]
-    timeList = timeList[beginIndex:eindIndex + 1] # Logica, want er is een beginpositie toegevoegd aan de positielijst
+    timeList = timeList[beginIndex:eindIndex + 1] # Logic, because an initial position has been added to the position list
    
 
-    # Bereken de tijd tussen meetpunten
-    dT = (timeList[len(timeList)-1] - timeList[0]) / len(timeList)  # Laatste tijdstip - eerste tijdstip / aantal tijdstippen
+    # Calculate the time between measurement points
+    dT = (timeList[len(timeList)-1] - timeList[0]) / len(timeList)  # Last time - first time / number of times
 
-    for indx in range(len(timeList)-1): # Gaat elk meetpunt langs
+    for indx in range(len(timeList)-1): # Goes over every measurement point
 
         if useRotation:
-            # Bouw de relatieve accelratie om in stabiele accelratie
+            # Convert the relative acceleration into stable acceleration
             stableAccelerationVector = transformRotation(phoneAccelList[indx], orientationList[indx])
            
         else:
@@ -180,10 +180,10 @@ def parseRawData(accelerometerPath, orientationPath, afronding, g, accelCorrecti
 
         gVector = numpy.array([0.0, 0.0, float(g)])
 
-        # Haal de zwaartekracht van de acceleratie af
+        # Subtract gravity from the acceleration
         stableAccelerationVector -= gVector
 
-        # Gebruik correctie in vaste ruimte (moet nog aangepast worden)
+        # Use correction in fixed space (still needs adaptation)
         stableAccelerationVector += accelCorrectie
 
         netAccelList = numpy.vstack([netAccelList, stableAccelerationVector])
@@ -206,19 +206,19 @@ def correct(useDoubleCorrection=True):
     global accelCorrection
     global velCorrectie
 
-    # Eerst een run doen zonder enige correcties:
+    # First do a run without any corrections:
     posList, velocityList, accelList, timeList, absVelocityList, absAccelList, orientationList = parseRawData(accelerometerPath, orientationPath, roundingDecimals, g, accelCorrection, velCorrectie, vel0, pos0, useRotation)
-    # Voert eerst een acceleratiecorrectie uit (vEind = vBegin)
-    # Voert daarna een 
+    # First performs an acceleration correction (vEnd = vBegin)
+    # Then performs a 
     beginVel = velocityList[0]
     beginTime = timeList[0]
 
-    print("Beginsnelheid:", beginVel)
+    print("Initial velocity:", beginVel)
     
     endVel = velocityList[len(velocityList)-1]
     endTime = timeList[len(velocityList)-1]
 
-    print("Eindsnelheid:", endVel)
+    print("End velocity:", endVel)
 
     deltaVel = endVel - beginVel
     deltaT = endTime - beginTime
@@ -230,14 +230,14 @@ def correct(useDoubleCorrection=True):
 
     accelCorrection = -deltaVel / deltaT
 
-    print("Acceleratiecorrectie:")
+    print("Acceleration correction:")
     print(accelCorrection)
 
-    # Daarna een run doen met enkel de acceleratiecorrectie
+    # Then do a run with only the acceleration correction
 
     posList, velocityList, accelList, timeList, absVelocityList, absAccelList, orientationList = parseRawData(accelerometerPath, orientationPath, roundingDecimals, g, accelCorrection, velCorrectie, vel0, pos0, useRotation)
 
-    # Voert dezelfde correctie uit als bij snelheid, maar dan voor positie
+    # Performs the same correction as for velocity, but then for position
 
     beginPos = posList[0]
     beginTime = timeList[0]
@@ -249,9 +249,9 @@ def correct(useDoubleCorrection=True):
 
     velCorrectie = -deltaPos / deltaT
 
-    print("Beginpositie:", beginPos)
-    print("Eindpositie:", endPos)
-    print("Snelheidscorrectie:", velCorrectie)
+    print("Initial position:", beginPos)
+    print("End position:", endPos)
+    print("Velocity correction:", velCorrectie)
 
 if useCorrection:
     correct()
@@ -259,23 +259,23 @@ if useCorrection:
 
 posList, velocityList, accelList, timeList, absVelocityList, absAccelList, orientationList = parseRawData(accelerometerPath, orientationPath, roundingDecimals, g, accelCorrection, velCorrectie, vel0, pos0, useRotation)
 
-# Je hebt nu data in posList, velocityList, accelList, absVelocityList, absAccelList met als bijbehorende tijdstippen timeList
+# You now have data in posList, velocityList, accelList, absVelocityList, absAccelList with corresponding times timeList
 
-# Berekening van energieen:
+# Calculation of energies:
 
 def calcPotentialEnergy(posList):
-    # Gezien dat de z-as nu gelijkstaat aan de verticale as, kan worden gesteld dat dit de as is waar de zwaartekracht puur op werkt
+    # Given that the z-axis is now equal to the vertical axis, it can be stated that this is the axis on which gravity purely acts
     # E_pot = m g h
-    return posList.transpose()[2] * g - (min(posList.transpose()[2])) * g# Eindresultaat in Joule / kg, waarbij nul potentiele energie gelijkstaat aan de onderkant van de beweging
+    return posList.transpose()[2] * g - (min(posList.transpose()[2])) * g# End result in Joule / kg, where zero potential energy equals the bottom of the movement
 
 def calcKineticEnergy(absVelocityList):
-    # Aangenomen wordt dat er geen rotationele energie is, enkel kinetische energie in de (lineaire) beweging van het schip
+    # It is assumed that there is no rotational energy, only kinetic energy in the (linear) movement of the ship
 
     # E_kin = 0.5 * m * v^2
 
-    return 0.5 * (absVelocityList.transpose()[0].transpose())**2 # Resultaat in Joule / kg
+    return 0.5 * (absVelocityList.transpose()[0].transpose())**2 # Result in Joule / kg
 
-def EpotMinCurveFit(t, a, b, c, d, e, f, g): # Simpele curvefit om de drift in de minima van de potentiele energie te absorberen
+def EpotMinCurveFit(t, a, b, c, d, e, f, g): # Simple curvefit to absorb the drift in the potential energy minima
     return (a + b * t + c * t ** 2 + d * t ** 3 + e * t ** 4 + f * t ** 5 + g * t ** 6)
 
 def findEpotMinima(timeList, E_pot):
@@ -314,7 +314,7 @@ def findCircleParams(printParams=False):
     return val[0], val[1], val[2], numpy.sqrt(cov[2][2])
 
 def updatePlotStyle(textScaling):
-    # Code van Boas Bakker voor universele plots
+    # Code by Boas Bakker for universal plots
     plt.rcParams.update({
         'figure.figsize': (10, 6),
         'xtick.labelsize': 10 * textScaling,
@@ -378,7 +378,7 @@ if plot2DPath:
 
     dCenter, zCenter, radius, unc = findCircleParams(True)    
     
-    dTest = numpy.linspace(min(dList)-1, max(dList)+1, 2000) # dList is cyclisch, maximum moet gebruikt worden
+    dTest = numpy.linspace(min(dList)-1, max(dList)+1, 2000) # dList is cyclic, maximum must be used
     fitHeights = halfCircleFit(dTest, dCenter, zCenter, radius)
 
     path2Dplot = plt.figure(figsize=(10, 6))
@@ -396,7 +396,7 @@ if plot2DPath:
     plt.savefig("flattened_path_piraat_fit.pdf", format='pdf')
 
 if plotCalculatedRadii:
-    velocities = absVelocityList.transpose()[0] # De snelheid is altijd tangentieel aan het middelpunt, per definitie
+    velocities = absVelocityList.transpose()[0] # The velocity is always tangential to the center, by definition
 
     xList = numpy.transpose(posList)[0]
     yList = numpy.transpose(posList)[1]
@@ -487,7 +487,7 @@ if plotEnergies:
     energiesPlot = plt.figure(figsize=(10, 6))
 
     E_pot = calcPotentialEnergy(posList)
-    E_kin = calcKineticEnergy(absVelocityList) * (13/13) # Deze correctie volgt uit het feit dat het massamiddelpunt van het schip een hogere snelheid zal hebben, omdat het een hogere straal heeft dan de meettelefoon
+    E_kin = calcKineticEnergy(absVelocityList) * (13/13) # This correction follows from the fact that the ship's center of mass will have a higher velocity, because it has a larger radius than the measuring phone
     
     ts, ps = findEpotMinima(timeList, E_pot)
 

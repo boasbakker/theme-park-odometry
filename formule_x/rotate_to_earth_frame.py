@@ -16,11 +16,16 @@ DATA_CUT = ROOT / "data_raw_cut"
 DATA_PROCESSED = ROOT / "data_processed"
 GYRO_CSV = DATA_CUT / "Gyroscope.csv"
 ACCEL_CSV = DATA_CUT / "Accelerometer.csv"
-OUT_ACCEL_CSV = DATA_PROCESSED / "accelerometer_earth.csv"
-OUT_ORIENTATION_CSV = DATA_PROCESSED / "orientation.csv"
-
-launch_slope = -0.35
-
+# --- COASTER SPECIFIC SETTINGS ---
+# Adjust these values when applying to a different roller coaster
+STATIONARY_WINDOW = 2.0        # Seconds of stationary data at start/end to establish gravity
+LAUNCH_WINDOW = 2.0            # Seconds of data over which to average launch acceleration
+LAUNCH_MIN_ACCEL = 9.0         # Minimum XY acceleration (m/s^2) identifying the launch
+LAUNCH_MAX_ACCEL = 11.0        # Maximum XY acceleration (m/s^2) identifying the launch
+LAUNCH_SLOPE = -0.35           # Direction in the XY plane the coaster launches towards 
+                               # Formule X launches slightly off-axis. [1, LAUNCH_SLOPE]
+EXPECTED_START_GRAVITY = np.array([0.0, 0.0, 9.81]) # Global gravity vector to align to
+# ---------------------------------
 
 def integrate_gyro_to_rotations(times, gyro_xyz):
     """
@@ -104,17 +109,17 @@ def main():
     t0 = times[0]
     tN = times[-1]
 
-    # find first 2s and last 2s windows (based on accelerometer times)
-    start_mask = (times <= (t0 + 2.0 + 1e-12))
-    end_mask = (times >= (tN - 2.0 - 1e-12))
+    # find first and last stationary windows (based on accelerometer times)
+    start_mask = (times <= (t0 + STATIONARY_WINDOW + 1e-12))
+    end_mask = (times >= (tN - STATIONARY_WINDOW - 1e-12))
     if np.sum(start_mask) < 3 or np.sum(end_mask) < 3:
-        print('Warning: fewer than 3 samples found in 2s gravity windows. Results may be noisy.')
+        print(f'Warning: fewer than 3 samples found in {STATIONARY_WINDOW}s gravity windows. Results may be noisy.')
 
     g_start = np.mean(accel[start_mask], axis=0)
     g_end = np.mean(accel[end_mask], axis=0)
 
     # target gravity vector in Earth frame
-    g_target = np.array([0.0, 0.0, 9.81])
+    g_target = EXPECTED_START_GRAVITY
 
     # initial rotation that maps start gravity to Earth gravity direction
     R_init = vec_to_rotation_from_two_vectors(g_start, g_target)
@@ -163,16 +168,18 @@ def main():
     # apply correction rots to accel_rotated
     accel_rotated_corrected = np.vstack([corr.apply(v) for corr, v in zip(correction_rots, accel_rotated)])
 
-    best_mean_xy, best_idx = find_best_xy_interval_for_heading(times, accel_rotated_corrected, window_duration=2.0, az_min=9.0, az_max=11.0)
+    best_mean_xy, best_idx = find_best_xy_interval_for_heading(
+        times, accel_rotated_corrected, window_duration=LAUNCH_WINDOW, az_min=LAUNCH_MIN_ACCEL, az_max=LAUNCH_MAX_ACCEL
+    )
 
     if best_mean_xy is None:
         raise RuntimeError(
-            'Error: no 2-second interval found with 9 < a_z_avg < 11 and '
-            '5 < a_z_min and a_z_max < 15; automatic Z rotation is required, exiting.'
+            f'Error: no {LAUNCH_WINDOW}-second interval found with {LAUNCH_MIN_ACCEL} < a_xy_avg < {LAUNCH_MAX_ACCEL}; '
+            'automatic Z rotation is required, exiting.'
         )
     else:
         # desired direction in XY plane
-        v_des = np.array([1, launch_slope])
+        v_des = np.array([1, LAUNCH_SLOPE])
         # compute angles
         ang_cur = np.arctan2(best_mean_xy[1], best_mean_xy[0])
         ang_des = np.arctan2(v_des[1], v_des[0])

@@ -17,6 +17,16 @@ DATA_PROCESSED = ROOT / "data_processed"
 ACCEL_CSV = DATA_CUT / "Accelerometer.csv"
 OUT_CSV = DATA_PROCESSED / "accelerometer_cart.csv"
 
+# --- COASTER SPECIFIC SETTINGS ---
+# Adjust these values when applying to a different roller coaster
+STATIONARY_WINDOW = 2.0        # Seconds of stationary data at start/end to establish gravity
+LAUNCH_WINDOW = 2.0            # Seconds of data over which to average launch acceleration
+LAUNCH_MIN_ACCEL = 9.0         # Minimum XY acceleration (m/s^2) identifying the launch
+LAUNCH_MAX_ACCEL = 11.0        # Maximum XY acceleration (m/s^2) identifying the launch
+EXPECTED_START_GRAVITY = np.array([0.0, 0.0, 9.81]) # Baseline gravity reference
+TARGET_LAUNCH_DIR = np.array([0.0, 1.0])            # Forward direction in the cart frame
+# ---------------------------------
+
 def main():
     print(f"Reading {ACCEL_CSV}...")
     adf = read_csv_guess(ACCEL_CSV)
@@ -39,16 +49,16 @@ def main():
     t0 = times[0]
     tN = times[-1]
 
-    start_mask = (times <= (t0 + 2.0 + 1e-12))
-    end_mask = (times >= (tN - 2.0 - 1e-12))
+    start_mask = (times <= (t0 + STATIONARY_WINDOW + 1e-12))
+    end_mask = (times >= (tN - STATIONARY_WINDOW - 1e-12))
     
     if np.sum(start_mask) < 3 or np.sum(end_mask) < 3:
-        print('Warning: fewer than 3 samples found in 2s gravity windows.')
+        print(f'Warning: fewer than 3 samples found in {STATIONARY_WINDOW}s gravity windows.')
 
     g_start_measured = np.mean(accel[start_mask], axis=0)
     g_end_measured = np.mean(accel[end_mask], axis=0)
     
-    target_gravity = np.array([0.0, 0.0, 9.81])
+    target_gravity = EXPECTED_START_GRAVITY
 
     R_start = vec_to_rotation_from_two_vectors(g_start_measured, target_gravity)
     R_end = vec_to_rotation_from_two_vectors(g_end_measured, target_gravity)
@@ -65,14 +75,14 @@ def main():
 
     print("Detecting launch event to align Y-axis...")
     best_mean_xy, best_idx = find_best_xy_interval_for_heading(
-        times, accel_leveled, window_duration=2.0, az_min=9.0, az_max=11.0
+        times, accel_leveled, window_duration=LAUNCH_WINDOW, az_min=LAUNCH_MIN_ACCEL, az_max=LAUNCH_MAX_ACCEL
     )
 
     if best_mean_xy is None:
         print('Warning: Could not detect clear launch event. Y-axis alignment might be arbitrary.')
         accel_final = accel_leveled
     else:
-        v_des = np.array([0.0, 1.0])
+        v_des = TARGET_LAUNCH_DIR
 
         ang_cur = np.arctan2(best_mean_xy[1], best_mean_xy[0])
         ang_des = np.arctan2(v_des[1], v_des[0])

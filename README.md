@@ -43,6 +43,18 @@ To reproduce the analysis, execute the scripts in the following order:
 3. **Carriage Frame Analysis (Optional):** Run `rotate_to_cart_frame.py` if carriage-frame data is required.
 4. **Visualization:** Run any of the scripts in `plotting_scripts/` to generate graphs, use `google_earth/convert_earth.py` to create a map overlay, or explore the `unused_plotting_scripts/` directory to animate the path and analyze the turn radius.
 
+### Applying to a Different Roller Coaster
+
+If you want to apply this repository's code to data from a different roller coaster, you will need to adjust several coaster-specific parameters. These parameters govern how the scripts extract gravity profiles and align heading directions based on launch acceleration.
+
+At the top of the core processing scripts (`rotate_to_earth_frame.py`, `rotate_to_cart_frame.py`, and `integrate_accel.py`), you will find a settings block labeled `--- COASTER SPECIFIC SETTINGS ---`. 
+
+Key values you might need to adjust include:
+- `STATIONARY_WINDOW`: Duration (in seconds) at the very start and end of the trim window where the phone is completely stationary to estimate baseline gravity and establish the Zero Velocity Update (ZUPT) intervals for drift correction.
+- `LAUNCH_WINDOW`: Duration (in seconds) to average the launch acceleration.
+- `LAUNCH_MIN_ACCEL` & `LAUNCH_MAX_ACCEL`: The expected horizontal acceleration threshold bounds (in m/s²) that the script uses to auto-detect the launch event and align the X/Y axes correctly.
+- `LAUNCH_SLOPE`: The launch slope is used for azimuthal alignment. It is the ratio dy/dx where +y is the North direction and +x is the East direction. This is needed for a correct Google Earth overlay.
+
 ## De Piraat
 
 *Data and analysis scripts for De Piraat are yet to be added.*

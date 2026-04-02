@@ -8,7 +8,12 @@ ROOT = Path(__file__).resolve().parent
 DATA_PROCESSED = ROOT / "data_processed"
 INPUT_CSV = DATA_PROCESSED / "accelerometer_earth.csv"
 OUTPUT_CSV = DATA_PROCESSED / "motion_data.csv"
-G = 9.80665
+
+# --- COASTER SPECIFIC SETTINGS ---
+# Adjust these values when applying to a different roller coaster
+STATIONARY_WINDOW = 2.0        # Seconds of stationary data at start/end to establish gravity subtraction
+G = 9.80665                    # Default gravity constant, if stationary window cannot be found
+# ---------------------------------
 
 def read_accel_csv(path):
     df = pd.read_csv(path)
@@ -50,7 +55,7 @@ def main():
     t, acc = read_accel_csv(INPUT_CSV)
     
     acc_corr = acc.copy()
-    mask_static = (t <= (t[0] + 2.0)) | (t >= (t[-1] - 2.0))
+    mask_static = (t <= (t[0] + STATIONARY_WINDOW)) | (t >= (t[-1] - STATIONARY_WINDOW))
     g_est = np.mean(acc[mask_static, 2]) if np.any(mask_static) else G
     acc_corr[:, 2] -= g_est
     

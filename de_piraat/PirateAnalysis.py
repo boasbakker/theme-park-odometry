@@ -20,25 +20,25 @@ eindIndex = 17500 # Where do the measurements end? (0 to include every measureme
 accelerometerPath = "data_raw/Accelerometer.csv"
 orientationPath = "data_raw/Orientation.csv"
 
-g = 9.81
+g = 9.81 # set to 0 to not subtract gravity
 roundingDecimals = 8
 
 useRotation = True # Should the inverse phone rotation be used?
 useCorrection = True # Should corrections be applied so that the start position equals the end position?
+useExtraCorrection = False # Should the sixth-degree polynomial be used for extra correction of the potential energy drift?
 plotCalculatedPositions = False # Should a graph of the positions be created?
 plotCalculatedVelocities = False # Should the velocity be in a separate graph?
-plotAcceleration = False # Should the (rotated) acceleration be plotted?
+plotAcceleration = False # Should the acceleration be plotted? (for raw rotation: set rotation=False. useCorrection=False, and g=0)
 plotAbsVelocity = False # Should the calculated absolute velocity be plotted?
 plotAbsAcceleration = False # Should the absolute acceleration be plotted?
 plotEnergies = True # Should the total energy be plotted?
-plotOrientation = True # Should the phone orientation (according to Phyphox) be shown?
+plotOrientation = False # Should the phone orientation (according to Phyphox) be shown?
 plot2DPath = False
 plotCalculatedRadii = False
 
 
 accelCorrection = numpy.array([0., 0., 0.]) # Acceleration correction in absolute plane
 velCorrectie = numpy.array([0., 0., 0.])
-phoneAccelCorrectie = numpy.array([0., 0., 0.]) # Theoretical. Would be very cool if it works. To be added.
 
 
 
@@ -290,21 +290,22 @@ def EpotMinCurveFit(t, a, b, c, d, e, f, g): # Simple curvefit to absorb the dri
     return (a + b * t + c * t ** 2 + d * t ** 3 + e * t ** 4 + f * t ** 5 + g * t ** 6)
 
 def findEpotMinima(timeList, E_pot):
-    falling = True
-    rising = True
     flipPoints = []
-    for indx, energy in enumerate(E_pot):
-        try:
-            if energy > E_pot[indx-1] and falling:
-                rising = True
-                falling = False
-                flipPoints.append(indx)
-            if energy < E_pot[indx-1] and rising:
-                falling = True
-                rising = False
-        except:
-            pass
+    n = 10
     
+    # Require a (2n+1)-point "V" shape
+    for i in range(n, len(E_pot) - n):
+        is_v_shape = True
+        
+        # Check falling left side and rising right side
+        for j in range(1, n + 1):
+            if not (E_pot[i - j + 1] < E_pot[i - j]) or not (E_pot[i + j - 1] < E_pot[i + j]):
+                is_v_shape = False
+                break
+                    
+        if is_v_shape:
+            flipPoints.append(i)
+            
     return timeList[flipPoints], E_pot[flipPoints]
 
 def halfCircleFit(x, xCenter, yCenter, radius):
@@ -365,9 +366,9 @@ if plotCalculatedVelocities:
 
 if plotAcceleration:
     accelPlot = plt.figure(figsize=(10, 6))
-    plt.scatter(timeList, numpy.transpose(numpy.transpose(accelList)[0]), color='blue', label='x', marker='.', alpha=0.5, rasterized=True, linewidth=0)
-    plt.scatter(timeList, numpy.transpose(numpy.transpose(accelList)[1]), color='orange', label='y', marker='.', alpha=0.5, rasterized=True, linewidth=0)
-    plt.scatter(timeList, numpy.transpose(numpy.transpose(accelList)[2]), color='green', label='z', marker='.', alpha=0.5, rasterized=True, linewidth=0)
+    plt.scatter(timeList, numpy.transpose(numpy.transpose(accelList)[0]), color='blue', label='x', alpha=0.5, rasterized=True, linewidth=0)
+    plt.scatter(timeList, numpy.transpose(numpy.transpose(accelList)[1]), color='orange', label='y', alpha=0.5, rasterized=True, linewidth=0)
+    plt.scatter(timeList, numpy.transpose(numpy.transpose(accelList)[2]), color='green', label='z', alpha=0.5, rasterized=True, linewidth=0)
     plt.xlabel("$t$ [s]")
     plt.ylabel("$a$ [m/s$^2$]")
     legend = plt.legend(markerscale=3)
@@ -496,26 +497,34 @@ if plotEnergies:
     
     ts, ps = findEpotMinima(timeList, E_pot)
 
+    print("Testing polynomial degrees for RMSE:")
     try:
-        val, cov = curve_fit(EpotMinCurveFit, ts, ps)
-    except:
-        print("Minimums could not be fitted, too little data points.")
-        val = [0, 0, 0, 0, 0, 0, 0]
-
-    print("Computer Assisted Taylorpolynomial correction coefficients:", val)
-
-    yTest = EpotMinCurveFit(timeList, val[0], val[1], val[2], val[3], val[4], val[5], val[6])
+        for degree in range(2, 11):
+            coeffs = numpy.polyfit(ts, ps, degree)
+            p_val = numpy.polyval(coeffs, ts)
+            rmse = numpy.sqrt(numpy.mean((ps - p_val)**2))
+            print(f"Degree {degree} RMSE: {rmse}")
+        
+        # Keep degree 6 for the actual plot as it provides a good balance between fitting the minima and avoiding overfitting
+        val = numpy.polyfit(ts, ps, 6)
+        yTest = numpy.polyval(val, timeList)
+    except Exception as e:
+        print("Minimums could not be fitted, too little data points or error:", e)
+        yTest = numpy.zeros_like(timeList)
 
     plt.rcParams['lines.linewidth'] = 2 # Overwrite the line width for the energy plot
     
-    #plt.vlines(ts, 0, 50)
-    plt.plot(timeList, numpy.add(E_pot, -1*yTest), color='orange', label='Corrected gravitational', rasterized=True)
-    #plt.plot(ts, ps, 'r.', markersize=15, label="Gravitational minima")
-    plt.plot(timeList, E_kin, color='blue', label='Kinetic', rasterized=True)
-    plt.plot(timeList, numpy.add(numpy.add(E_kin, E_pot), -1 * yTest), color='green', linestyle='--', label='Total', rasterized=True)
-    #plt.plot(timeList, yTest, 'k--', label='Curve Fit through minima', rasterized=True)
-    
-    legend = plt.legend() 
+    if (useExtraCorrection):
+        plt.plot(timeList, numpy.add(E_pot, -1*yTest), color='orange', label='Corrected gravitational', rasterized=True)
+        plt.plot(timeList, E_kin, color='blue', label='Kinetic', rasterized=True)
+        plt.plot(timeList, numpy.add(numpy.add(E_kin, E_pot), -1 * yTest), color='green', linestyle='--', label='Total', rasterized=True)
+        legend = plt.legend(loc="lower right") 
+    else:
+        plt.plot(timeList, E_pot, color='blue', label='Uncorrected gravitational', rasterized=True)
+        plt.plot(ts, ps, 'r.', markersize=15, label="Gravitational minima")
+        plt.plot(timeList, yTest, 'k--', label='Curve Fit through minima', rasterized=True)
+        legend = plt.legend() 
+
     for handle in legend.legend_handles:
         handle.set_alpha(1)
 

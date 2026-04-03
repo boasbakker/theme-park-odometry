@@ -334,10 +334,12 @@ def updatePlotStyle(textScaling):
         'axes.titlesize': 14 * textScaling,
         'legend.fontsize': 10 * textScaling,
         'axes.grid': True,
-        'lines.linewidth': 0.5,
+        'lines.linewidth': 2,
         'lines.markersize': 2,
         'figure.dpi': 600
     })
+
+updatePlotStyle(1.5)
 
 if plotCalculatedPositions:
     xList = numpy.transpose(posList)[0]
@@ -357,7 +359,6 @@ if plotCalculatedVelocities:
     plt.plot(timeList, velocityList.transpose()[0], 'b.', label='V$_x$')
     plt.plot(timeList, velocityList.transpose()[1], '.', color='orange', label='V$_y$')
     plt.plot(timeList, velocityList.transpose()[2], 'g.', label='V$_z$')
-    updatePlotStyle(1.5)
     plt.xlabel("$t$ [s]")
     plt.ylabel("$v$ [m/s]")
     plt.legend()
@@ -373,8 +374,6 @@ if plotAcceleration:
 
     for handle in legend.legend_handles:
         handle.set_alpha(1)
-    updatePlotStyle(1.5)
-    plt.grid()
     plt.savefig("Raw Acceleration measured by phone vs Time, alpha 0.5.pdf", format='pdf')
 
 if plot2DPath:
@@ -402,8 +401,6 @@ if plot2DPath:
 
     for handle in legend.legend_handles:
         handle.set_alpha(1)
-    updatePlotStyle(1.5)
-    plt.grid()
     plt.savefig("flattened_path_piraat_fit.pdf", format='pdf')
 
 if plotCalculatedRadii:
@@ -452,7 +449,6 @@ if plotCalculatedRadii:
 
     for handle in legend.legend_handles:
         handle.set_alpha(1)
-    updatePlotStyle(1.5)
 
 if plotAbsVelocity:
     absVelPlot = plt.figure()
@@ -490,8 +486,6 @@ if plotOrientation:
     plt.ylabel("Angle [rad]")
    
     plt.legend()
-    plt.grid()
-    updatePlotStyle(1.5)
     plt.savefig("Raw Orientation piraat vs time euler.pdf", format='pdf')
 
 if plotEnergies:
@@ -512,7 +506,7 @@ if plotEnergies:
 
     yTest = EpotMinCurveFit(timeList, val[0], val[1], val[2], val[3], val[4], val[5], val[6])
 
-    
+    plt.rcParams['lines.linewidth'] = 2 # Overwrite the line width for the energy plot
     
     #plt.vlines(ts, 0, 50)
     plt.plot(timeList, numpy.add(E_pot, -1*yTest), color='orange', label='Corrected gravitational', rasterized=True)
@@ -527,11 +521,4 @@ if plotEnergies:
 
     plt.xlabel("$t$ [s]")
     plt.ylabel("$E/m$ [m$^2$/s$^2$]")
-    updatePlotStyle(1.5)
-    plt.grid()
     plt.savefig("plot_piraat_energie.pdf", format='pdf')
-
-
-
-
-plt.show()

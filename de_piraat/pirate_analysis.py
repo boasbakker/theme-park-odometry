@@ -1,21 +1,16 @@
 import matplotlib.pyplot as plt
-import numpy
-import math
+import numpy as np
 from scipy.optimize import curve_fit
-
-
 
 # Frank de Kogel, 19/09/2025
 
-beginIndex = 7000 # From which index do measurements actually begin? 12623
-eindIndex = 17500 # Where do the measurements end? (0 to include every measurement) 13387
+beginIndex = 7000 # From which index does the ride start?
+eindIndex = 17500 # At which index does the ride end? (0 to include every measurement)
 
-# A nice arc from Finn's measurements:
-# beginIndex = 12626
-# eindIndex = 13386
+# A nice excerpt from Finn's measurements:
+beginIndex, eindIndex = 12626, 13386
 
-
-# Period pirate = 7.61
+# Period pendulum ship = 7.61
 
 accelerometerPath = "data_raw/Accelerometer.csv"
 orientationPath = "data_raw/Orientation.csv"
@@ -25,26 +20,26 @@ roundingDecimals = 8
 
 useRotation = True # Should the inverse phone rotation be used?
 useCorrection = True # Should corrections be applied so that the start position equals the end position?
-useExtraCorrection = False # Should the sixth-degree polynomial be used for extra correction of the potential energy drift?
+useExtraCorrection = True # Should the sixth-degree polynomial be used for extra correction of the potential energy drift?
 plotCalculatedPositions = False # Should a graph of the positions be created?
 plotCalculatedVelocities = False # Should the velocity be in a separate graph?
 plotAcceleration = False # Should the acceleration be plotted? (for raw rotation: set rotation=False. useCorrection=False, and g=0)
 plotAbsVelocity = False # Should the calculated absolute velocity be plotted?
 plotAbsAcceleration = False # Should the absolute acceleration be plotted?
-plotEnergies = True # Should the total energy be plotted?
+plotEnergies = False # Should the total energy be plotted?
 plotOrientation = False # Should the phone orientation (according to Phyphox) be shown?
-plot2DPath = False
+plot2DPath = True
 plotCalculatedRadii = False
 
 
-accelCorrection = numpy.array([0., 0., 0.]) # Acceleration correction in absolute plane
-velCorrectie = numpy.array([0., 0., 0.])
+accelCorrection = np.array([0., 0., 0.]) # Acceleration correction in absolute plane
+velCorrectie = np.array([0., 0., 0.])
 
 
 
-vel0 = numpy.array((0., 0., 0.)) # Initial velocity
+vel0 = np.array((0., 0., 0.)) # Initial velocity
 
-pos0 = numpy.array((0., 0., 0.)) # Initial position
+pos0 = np.array((0., 0., 0.)) # Initial position
 
 def transformRotation(phoneAccel, orientation):
 
@@ -66,7 +61,7 @@ def transformRotation(phoneAccel, orientation):
     # Y = y × sin (0.5 × yHoek)
     # Z = z × sin (0.5 × zHoek)
 
-    rotatieMatrix = numpy.array([[2 * (orientation[0] * orientation[0] + orientation[1] * orientation[1]) - 1,
+    rotatieMatrix = np.array([[2 * (orientation[0] * orientation[0] + orientation[1] * orientation[1]) - 1,
                                      2 * (orientation[1] * orientation[2] - orientation[0] * orientation[3]),
                                      2 * (orientation[1] * orientation[3] + orientation[0] * orientation[2])],
                                     [2 * (orientation[1] * orientation[2] + orientation[0] * orientation[3]),
@@ -76,10 +71,10 @@ def transformRotation(phoneAccel, orientation):
                                      2 * (orientation[2] * orientation[3] + orientation[0] * orientation[1]),
                                      2 * (orientation[0] * orientation[0] + orientation[3] * orientation[3]) - 1]]) # Yep, looks nice doesn't it!
 
-    rotatieMatrix = numpy.transpose(rotatieMatrix) 
-    convertedVector = numpy.array([0.0, 0.0, 0.0])
+    rotatieMatrix = np.transpose(rotatieMatrix) 
+    convertedVector = np.array([0.0, 0.0, 0.0])
    
-    numpy.vecmat(phoneAccel, rotatieMatrix, out=convertedVector) # Here the phone's matrix is rotated so that the Z-axis is pointing up.
+    np.vecmat(phoneAccel, rotatieMatrix, out=convertedVector) # Here the phone's matrix is rotated so that the Z-axis is pointing up.
 
     return convertedVector
 
@@ -102,25 +97,25 @@ def parseRawData(accelerometerPath, orientationPath, afronding, g, accelCorrecti
 
     orientationList = [[0.0, 0.0, 0.0, 0.0]] # Lists for orientation quaternions (that is a new concept, I hope it works) (it worked!)
 
-    netAccelList = [numpy.copy(accelCorrectie)] # Keep track of all accelerations
+    netAccelList = [np.copy(accelCorrectie)] # Keep track of all accelerations
 
     absAccelList = [0.0]
 
-    velocity = numpy.array([0., 0., 0.])
+    velocity = np.array([0., 0., 0.])
    
     for i in range(len(vel0)):
         velocity[i] = vel0[i] # Variable to determine current velocity
 
-    velocityList = [numpy.copy(velocity)] # List to keep track of velocities
+    velocityList = [np.copy(velocity)] # List to keep track of velocities
 
     absVelocityList = [0.0]
 
-    pos = numpy.array([0., 0., 0.])
+    pos = np.array([0., 0., 0.])
 
     for i in range(len(beginPos)):
         pos[i] = beginPos[i] # Current position
 
-    posList = [numpy.copy(beginPos)] # List to keep track of position
+    posList = [np.copy(beginPos)] # List to keep track of position
 
     # Extract the acceleration measurements:
 
@@ -154,9 +149,9 @@ def parseRawData(accelerometerPath, orientationPath, afronding, g, accelCorrecti
    
     # All measurements are now saved
 
-    timeList = numpy.array(timeList)
-    phoneAccelList = numpy.array(phoneAccelList)
-    orientationList = numpy.array(orientationList)
+    timeList = np.array(timeList)
+    phoneAccelList = np.array(phoneAccelList)
+    orientationList = np.array(orientationList)
 
     # Now the measurements need to be 'cut' to the amount of data that will actually be used
 
@@ -182,7 +177,7 @@ def parseRawData(accelerometerPath, orientationPath, afronding, g, accelCorrecti
         else:
             stableAccelerationVector = phoneAccelList[indx]
 
-        gVector = numpy.array([0.0, 0.0, float(g)])
+        gVector = np.array([0.0, 0.0, float(g)])
 
         # Subtract gravity from the acceleration
         stableAccelerationVector -= gVector
@@ -190,25 +185,25 @@ def parseRawData(accelerometerPath, orientationPath, afronding, g, accelCorrecti
         # Use correction in fixed space (still needs adaptation)
         stableAccelerationVector += accelCorrectie
 
-        netAccelList.append(numpy.copy(stableAccelerationVector))
+        netAccelList.append(np.copy(stableAccelerationVector))
 
         velocity += stableAccelerationVector * dT
 
-        velocityList.append(numpy.copy(velocity))
+        velocityList.append(np.copy(velocity))
 
-        absVelocityList.append(numpy.linalg.norm(velocity))
-        absAccelList.append(numpy.linalg.norm(stableAccelerationVector))
+        absVelocityList.append(np.linalg.norm(velocity))
+        absAccelList.append(np.linalg.norm(stableAccelerationVector))
 
         pos += velocity * dT + velCorrectie * dT
 
-        posList.append(numpy.copy(pos))
+        posList.append(np.copy(pos))
 
-    posList = numpy.array(posList)
-    velocityList = numpy.array(velocityList)
-    netAccelList = numpy.array(netAccelList)
-    timeList = numpy.array(timeList)
-    absVelocityList = numpy.array(absVelocityList).reshape(-1, 1) # reshape slightly to match vstack format when extracted later
-    absAccelList = numpy.array(absAccelList).reshape(-1, 1)
+    posList = np.array(posList)
+    velocityList = np.array(velocityList)
+    netAccelList = np.array(netAccelList)
+    timeList = np.array(timeList)
+    absVelocityList = np.array(absVelocityList).reshape(-1, 1) # reshape slightly to match vstack format when extracted later
+    absAccelList = np.array(absAccelList).reshape(-1, 1)
 
     return posList, velocityList, netAccelList, timeList, absVelocityList, absAccelList, orientationList
 
@@ -309,21 +304,21 @@ def findEpotMinima(timeList, E_pot):
     return timeList[flipPoints], E_pot[flipPoints]
 
 def halfCircleFit(x, xCenter, yCenter, radius):
-    return -1 * numpy.sqrt(radius**2 - (x-xCenter)**2) + yCenter
+    return -1 * np.sqrt(radius**2 - (x-xCenter)**2) + yCenter
 
 def horizontalLineFit(x, y):
     return y
 
 def findCircleParams(printParams=False):
     """Returns circle dCenter, zCenter and radius"""
-    xList = numpy.transpose(posList)[0]
-    yList = numpy.transpose(posList)[1]
-    zList = numpy.transpose(posList)[2]
-    dList = numpy.sqrt(yList**2 + xList**2)
+    xList = np.transpose(posList)[0]
+    yList = np.transpose(posList)[1]
+    zList = np.transpose(posList)[2]
+    dList = np.sqrt(yList**2 + xList**2)
     val, cov = curve_fit(halfCircleFit, dList, zList, p0=[10, 5, 12])
 
-    if printParams: print("Radius:", round(val[2], 4), "+-", round(numpy.sqrt(cov[2][2]), 4), "m")
-    return val[0], val[1], val[2], numpy.sqrt(cov[2][2])
+    if printParams: print("Radius:", round(val[2], 4), "+-", round(np.sqrt(cov[2][2]), 4), "m")
+    return val[0], val[1], val[2], np.sqrt(cov[2][2])
 
 def updatePlotStyle(textScaling):
     # Code by Boas Bakker for universal plots
@@ -343,9 +338,9 @@ def updatePlotStyle(textScaling):
 updatePlotStyle(1.5)
 
 if plotCalculatedPositions:
-    xList = numpy.transpose(posList)[0]
-    yList = numpy.transpose(posList)[1]
-    zList = numpy.transpose(posList)[2]
+    xList = np.transpose(posList)[0]
+    yList = np.transpose(posList)[1]
+    zList = np.transpose(posList)[2]
 
     fig3d = plt.figure()
     ax = fig3d.add_subplot(projection='3d')
@@ -366,30 +361,30 @@ if plotCalculatedVelocities:
 
 if plotAcceleration:
     accelPlot = plt.figure(figsize=(10, 6))
-    plt.scatter(timeList, numpy.transpose(numpy.transpose(accelList)[0]), color='blue', label='x', alpha=0.5, rasterized=True, linewidth=0)
-    plt.scatter(timeList, numpy.transpose(numpy.transpose(accelList)[1]), color='orange', label='y', alpha=0.5, rasterized=True, linewidth=0)
-    plt.scatter(timeList, numpy.transpose(numpy.transpose(accelList)[2]), color='green', label='z', alpha=0.5, rasterized=True, linewidth=0)
+    plt.scatter(timeList, np.transpose(np.transpose(accelList)[0]), color='blue', label='x', alpha=0.5, rasterized=True, linewidth=0)
+    plt.scatter(timeList, np.transpose(np.transpose(accelList)[1]), color='orange', label='y', alpha=0.5, rasterized=True, linewidth=0)
+    plt.scatter(timeList, np.transpose(np.transpose(accelList)[2]), color='green', label='z', alpha=0.5, rasterized=True, linewidth=0)
     plt.xlabel("$t$ [s]")
     plt.ylabel("$a$ [m/s$^2$]")
     legend = plt.legend(markerscale=3)
 
     for handle in legend.legend_handles:
         handle.set_alpha(1)
-    plt.savefig("Raw Acceleration measured by phone vs Time, alpha 0.5.pdf", format='pdf')
+    plt.savefig("acceleration_raw.pdf", format='pdf')
 
 if plot2DPath:
 
-    xList = numpy.transpose(posList)[0]
-    yList = numpy.transpose(posList)[1]
-    zList = numpy.transpose(posList)[2]
+    xList = np.transpose(posList)[0]
+    yList = np.transpose(posList)[1]
+    zList = np.transpose(posList)[2]
 
     # To correct for the path being in the x- and y-dimension, an arbitrary dimension d is made which uses the pythagorean theorem to unify the x- and y-dimension
 
-    dList = numpy.sqrt(yList**2 + xList**2)
+    dList = np.sqrt(yList**2 + xList**2)
 
     dCenter, zCenter, radius, unc = findCircleParams(True)    
     
-    dTest = numpy.linspace(min(dList)-1, max(dList)+1, 2000) # dList is cyclic, maximum must be used
+    dTest = np.linspace(min(dList)-1, max(dList)+1, 2000) # dList is cyclic, maximum must be used
     fitHeights = halfCircleFit(dTest, dCenter, zCenter, radius)
 
     path2Dplot = plt.figure(figsize=(10, 6))
@@ -402,33 +397,33 @@ if plot2DPath:
 
     for handle in legend.legend_handles:
         handle.set_alpha(1)
-    plt.savefig("flattened_path_piraat_fit.pdf", format='pdf')
+    plt.savefig("flattened_path.pdf", format='pdf')
 
 if plotCalculatedRadii:
     velocities = absVelocityList.transpose()[0] # The velocity is always tangential to the center, by definition
 
-    xList = numpy.transpose(posList)[0]
-    yList = numpy.transpose(posList)[1]
-    zList = numpy.transpose(posList)[2]
+    xList = np.transpose(posList)[0]
+    yList = np.transpose(posList)[1]
+    zList = np.transpose(posList)[2]
 
     # To correct for the path being in the x- and y-dimension, an arbitrary dimension d is made which uses the pythagorean theorem to unify the x- and y-dimension
 
-    dList = numpy.sqrt(yList**2 + xList**2)
+    dList = np.sqrt(yList**2 + xList**2)
 
-    xAccels = numpy.transpose(numpy.transpose(accelList)[0])
-    yAccels = numpy.transpose(numpy.transpose(accelList)[1])
-    zAccels = numpy.transpose(numpy.transpose(accelList)[2])
+    xAccels = np.transpose(np.transpose(accelList)[0])
+    yAccels = np.transpose(np.transpose(accelList)[1])
+    zAccels = np.transpose(np.transpose(accelList)[2])
 
-    dAccels = numpy.sqrt(xAccels ** 2 + yAccels ** 2)
+    dAccels = np.sqrt(xAccels ** 2 + yAccels ** 2)
 
     dCenter, zCenter, *args = findCircleParams()
 
-    vectorPointCenter = numpy.array([(dCenter - dList), (zCenter - zList)]).transpose()
-    vectorAccel = numpy.array([dAccels, zAccels]).transpose()
+    vectorPointCenter = np.array([(dCenter - dList), (zCenter - zList)]).transpose()
+    vectorAccel = np.array([dAccels, zAccels]).transpose()
 
     radialAccel = []
     for indx, vec in enumerate(vectorPointCenter):
-        radialAccel.append(abs(numpy.dot(vectorAccel[indx], vec) / numpy.linalg.norm(vec)))
+        radialAccel.append(abs(np.dot(vectorAccel[indx], vec) / np.linalg.norm(vec)))
 
     radii = velocities**2 / radialAccel
 
@@ -471,9 +466,9 @@ if plotOrientation:
     y = orientationList.transpose()[2]
     z = orientationList.transpose()[3]
 
-    roll = numpy.atan2(2*(x * w + y * z), 1-2*(x**2 + y**2))
-    pitch = numpy.asin(2*(y * w - z * x))
-    yaw = numpy.atan2(2*(z * w + x * y), 1-2*(y**2 + z**2))
+    roll = np.atan2(2*(x * w + y * z), 1-2*(x**2 + y**2))
+    pitch = np.asin(2*(y * w - z * x))
+    yaw = np.atan2(2*(z * w + x * y), 1-2*(y**2 + z**2))
     #plt.plot(timeList[:len(orientationList.transpose()[0])], orientationList.transpose()[0], marker='.', label='w', color='black', rasterized=True)
     #plt.plot(timeList[:len(orientationList.transpose()[1])], orientationList.transpose()[1], marker='.', label='x', color='blue', rasterized=True)
     #plt.plot(timeList[:len(orientationList.transpose()[2])], orientationList.transpose()[2], marker='.', label='y', color='orange', rasterized=True)
@@ -487,7 +482,7 @@ if plotOrientation:
     plt.ylabel("Angle [rad]")
    
     plt.legend()
-    plt.savefig("Raw Orientation piraat vs time euler.pdf", format='pdf')
+    plt.savefig("orientation_raw.pdf", format='pdf')
 
 if plotEnergies:
     energiesPlot = plt.figure(figsize=(10, 6))
@@ -500,25 +495,26 @@ if plotEnergies:
     print("Testing polynomial degrees for RMSE:")
     try:
         for degree in range(2, 11):
-            coeffs = numpy.polyfit(ts, ps, degree)
-            p_val = numpy.polyval(coeffs, ts)
-            rmse = numpy.sqrt(numpy.mean((ps - p_val)**2))
+            coeffs = np.polyfit(ts, ps, degree)
+            p_val = np.polyval(coeffs, ts)
+            rmse = np.sqrt(np.mean((ps - p_val)**2))
             print(f"Degree {degree} RMSE: {rmse}")
         
         # Keep degree 6 for the actual plot as it provides a good balance between fitting the minima and avoiding overfitting
-        val = numpy.polyfit(ts, ps, 6)
-        yTest = numpy.polyval(val, timeList)
+        val = np.polyfit(ts, ps, 6)
+        yTest = np.polyval(val, timeList)
     except Exception as e:
         print("Minimums could not be fitted, too little data points or error:", e)
-        yTest = numpy.zeros_like(timeList)
+        yTest = np.zeros_like(timeList)
 
     plt.rcParams['lines.linewidth'] = 2 # Overwrite the line width for the energy plot
     
     if (useExtraCorrection):
-        plt.plot(timeList, numpy.add(E_pot, -1*yTest), color='orange', label='Corrected gravitational', rasterized=True)
+        plt.plot(timeList, np.add(E_pot, -1*yTest), color='orange', label='Corrected gravitational', rasterized=True)
         plt.plot(timeList, E_kin, color='blue', label='Kinetic', rasterized=True)
-        plt.plot(timeList, numpy.add(numpy.add(E_kin, E_pot), -1 * yTest), color='green', linestyle='--', label='Total', rasterized=True)
-        legend = plt.legend(loc="lower right") 
+        plt.plot(timeList, np.add(np.add(E_kin, E_pot), -1 * yTest), color='green', linestyle='--', label='Total', rasterized=True)
+        if(eindIndex- beginIndex > 10000): 
+            legend = plt.legend(loc="lower right") # Move the legend for Figure 10
     else:
         plt.plot(timeList, E_pot, color='blue', label='Uncorrected gravitational', rasterized=True)
         plt.plot(ts, ps, 'r.', markersize=15, label="Gravitational minima")
@@ -530,4 +526,4 @@ if plotEnergies:
 
     plt.xlabel("$t$ [s]")
     plt.ylabel("$E/m$ [m$^2$/s$^2$]")
-    plt.savefig("plot_piraat_energie.pdf", format='pdf')
+    plt.savefig("energy_profile.pdf", format='pdf')

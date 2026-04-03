@@ -67,16 +67,25 @@ The `de_piraat/` directory contains the main analysis script (`PirateAnalysis.py
 ##### Parameters
  - `useRotation`: Specifies whether to use the orientation data.
  - `useCorrection`: Specifies whether to apply a correction to unify the final speed and position with the initial speed and position.
+ - `useExtraCorrection`: Specifies whether to subtract a fitted polynomial from the minima of the potential energy for extra drift correction in the energy plot.
  - `plotCalculatedPositions`: Generate a 3D plot of the integrated positions.
  - `plotCalculatedVelocities`: Generate a plot of individual velocity components.
- - `plotAcceleration`: Generate a plot of individual accelerations.
+ - `plotAcceleration`: Generate a plot of acceleration data.
  - `plotAbsVelocity`: Generate a plot of the velocity norms.
  - `plotAbsAcceleration`: Generate a plot of the acceleration norms.
- - `plotEnergies`: Generate a plot of specific energies (Kinetic & Potential). (This function needs to be modified to best suit your requirements.)
+ - `plotEnergies`: Generate a plot of specific energies (kinetic & potential).
  - `plotOrientation`: Generate a plot of the Euler angles of the smartphone.
  - `plot2DPath`: This function unifies the x and y axes to generate a 2D path plot, useful for circular motions. It also generates a circular curve fit for the path.
  - `plotCalculatedRadii`: Function which roughly calculates the radius of the swinging motion based on velocity and acceleration.
 
+##### Settings for plots in paper
+- Figure 6: Raw proper acceleration: `useRotation=False`, `useCorrection=False`, `g=0`, `plotAcceleration=True`
+- Figure 7: Raw orientation: `plotOrientation=True`
+- Figure 8: Specific gravitional energy prior to polynomial correction: `useRotation=True`, `useCorrection=True`, `useExtraCorrection=False`, `g=9.81`, `plotEnergies=True`
+- Figure 9: Corrected specific energy plot: `useRotation=True`, `useCorrection=True`, `useExtraCorrection=True`, `g=9.81`, `plotEnergies=True`
+- Figure 10: Excerpt of specific energy plot: same as Figure 9, but then uncommenting line 11: `beginIndex, eindIndex = 12626, 13386`
+- Figure 11: Reconstructed path `useRotation=True`, `useCorrection=True`, `plot2DPath=True`
+
 ## Citation
 
-If you use this repository or dataset in your work, please cite our paper.
+If you use this repository or dataset in your work, please cite our paper in the European Journal of Physics.

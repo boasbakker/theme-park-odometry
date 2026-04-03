@@ -11,8 +11,8 @@ beginIndex = 7000 # From which index do measurements actually begin? 12623
 eindIndex = 17500 # Where do the measurements end? (0 to include every measurement) 13387
 
 # A nice arc from Finn's measurements:
-# beginIndex 12626
-# eindIndex 13386
+# beginIndex = 12626
+# eindIndex = 13386
 
 
 # Period pirate = 7.61
@@ -27,11 +27,11 @@ useRotation = True # Should the inverse phone rotation be used?
 useCorrection = True # Should corrections be applied so that the start position equals the end position?
 plotCalculatedPositions = False # Should a graph of the positions be created?
 plotCalculatedVelocities = False # Should the velocity be in a separate graph?
-plotAcceleration = True # Should the (rotated) acceleration be plotted?
+plotAcceleration = False # Should the (rotated) acceleration be plotted?
 plotAbsVelocity = False # Should the calculated absolute velocity be plotted?
 plotAbsAcceleration = False # Should the absolute acceleration be plotted?
-plotEnergies = False # Should the total energy be plotted?
-plotOrientation = False # Should the phone orientation (according to Phyphox) be shown?
+plotEnergies = True # Should the total energy be plotted?
+plotOrientation = True # Should the phone orientation (according to Phyphox) be shown?
 plot2DPath = False
 plotCalculatedRadii = False
 
@@ -96,31 +96,31 @@ def parseRawData(accelerometerPath, orientationPath, afronding, g, accelCorrecti
    
     # Data acquired
 
-    timeList = numpy.array([0]) # Lists to store data in
+    timeList = [0.0] # Lists to store data in
 
-    phoneAccelList = numpy.array([[0, 0, -9.81]]) # Acceleration is needed to measure velocity and position
+    phoneAccelList = [[0.0, 0.0, -9.81]] # Acceleration is needed to measure velocity and position
 
-    orientationList = numpy.array([[0, 0, 0, 0]]) # Lists for orientation quaternions (that is a new concept, I hope it works) (it worked!)
+    orientationList = [[0.0, 0.0, 0.0, 0.0]] # Lists for orientation quaternions (that is a new concept, I hope it works) (it worked!)
 
-    netAccelList = numpy.array([accelCorrectie]) # Keep track of all accelerations
+    netAccelList = [numpy.copy(accelCorrectie)] # Keep track of all accelerations
 
-    absAccelList = numpy.array([0])
+    absAccelList = [0.0]
 
     velocity = numpy.array([0., 0., 0.])
    
     for i in range(len(vel0)):
         velocity[i] = vel0[i] # Variable to determine current velocity
 
-    velocityList = numpy.array([velocity]) # List to keep track of velocities
+    velocityList = [numpy.copy(velocity)] # List to keep track of velocities
 
-    absVelocityList = numpy.array([0])
+    absVelocityList = [0.0]
 
     pos = numpy.array([0., 0., 0.])
 
     for i in range(len(beginPos)):
         pos[i] = beginPos[i] # Current position
 
-    posList = numpy.array([beginPos]) # List to keep track of position
+    posList = [numpy.copy(beginPos)] # List to keep track of position
 
     # Extract the acceleration measurements:
 
@@ -134,8 +134,8 @@ def parseRawData(accelerometerPath, orientationPath, afronding, g, accelCorrecti
             yAcceleratie = round(float(line.split(",")[2]), afronding)
             zAcceleratie = round(float(line.split(",")[3]), afronding)
 
-            timeList = numpy.append(timeList, metingTijd) # Save the measurement
-            phoneAccelList = numpy.vstack([phoneAccelList, numpy.array([xAcceleratie, yAcceleratie, zAcceleratie])])
+            timeList.append(metingTijd) # Save the measurement
+            phoneAccelList.append([xAcceleratie, yAcceleratie, zAcceleratie])
 
 
         except:
@@ -144,15 +144,19 @@ def parseRawData(accelerometerPath, orientationPath, afronding, g, accelCorrecti
     for line in orientationRawData.split("\n"):
         try:
            
-            orientationList = numpy.vstack([orientationList, numpy.array([float(line.split(",")[1]),
-                                                                        float(line.split(",")[2]),
-                                                                        float(line.split(",")[3]),
-                                                                        float(line.split(",")[4])])]) # Adding the orientation
+            orientationList.append([float(line.split(",")[1]),
+                                    float(line.split(",")[2]),
+                                    float(line.split(",")[3]),
+                                    float(line.split(",")[4])]) # Adding the orientation
            
         except: # In case there is text (ew) in the data
             pass
    
     # All measurements are now saved
+
+    timeList = numpy.array(timeList)
+    phoneAccelList = numpy.array(phoneAccelList)
+    orientationList = numpy.array(orientationList)
 
     # Now the measurements need to be 'cut' to the amount of data that will actually be used
 
@@ -186,18 +190,25 @@ def parseRawData(accelerometerPath, orientationPath, afronding, g, accelCorrecti
         # Use correction in fixed space (still needs adaptation)
         stableAccelerationVector += accelCorrectie
 
-        netAccelList = numpy.vstack([netAccelList, stableAccelerationVector])
+        netAccelList.append(numpy.copy(stableAccelerationVector))
 
         velocity += stableAccelerationVector * dT
 
-        velocityList = numpy.vstack([velocityList, velocity])
+        velocityList.append(numpy.copy(velocity))
 
-        absVelocityList = numpy.vstack([absVelocityList, numpy.linalg.norm(velocity)])
-        absAccelList = numpy.vstack([absAccelList, numpy.linalg.norm(stableAccelerationVector)])
+        absVelocityList.append(numpy.linalg.norm(velocity))
+        absAccelList.append(numpy.linalg.norm(stableAccelerationVector))
 
         pos += velocity * dT + velCorrectie * dT
 
-        posList = numpy.vstack([posList, pos])
+        posList.append(numpy.copy(pos))
+
+    posList = numpy.array(posList)
+    velocityList = numpy.array(velocityList)
+    netAccelList = numpy.array(netAccelList)
+    timeList = numpy.array(timeList)
+    absVelocityList = numpy.array(absVelocityList).reshape(-1, 1) # reshape slightly to match vstack format when extracted later
+    absAccelList = numpy.array(absAccelList).reshape(-1, 1)
 
     return posList, velocityList, netAccelList, timeList, absVelocityList, absAccelList, orientationList
 
@@ -364,7 +375,7 @@ if plotAcceleration:
         handle.set_alpha(1)
     updatePlotStyle(1.5)
     plt.grid()
-    plt.savefig("Raw Acceleration measured by phone vs Time, alpha 0.3.pdf", format='pdf')
+    plt.savefig("Raw Acceleration measured by phone vs Time, alpha 0.5.pdf", format='pdf')
 
 if plot2DPath:
 

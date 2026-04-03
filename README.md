@@ -1,6 +1,6 @@
 # Theme Park Odometry: Data and Scripts
 
-This repository contains the data and analysis scripts used in our paper on smartphone-based inertial odometry for amusement ride trajectory reconstruction. Using smartphone acceleration and gyroscope data, we perform quaternion-based gyroscope integration, drift correction, and double integration to recover full 3D motion paths.
+This repository contains the data and analysis scripts used in our paper, *Reconstructing 3D theme park ride trajectories using smartphone odometry for demonstrating Newtonian mechanics*. Using smartphone acceleration and gyroscope data, we perform quaternion-based gyroscope integration, drift correction, and double integration to recover full 3D motion paths.
 
 ## Formule X
 

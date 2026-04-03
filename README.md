@@ -83,8 +83,8 @@ The `de_piraat/` directory contains the main analysis script (`PirateAnalysis.py
 - Figure 7: Raw orientation: `plotOrientation=True`
 - Figure 8: Specific gravitional energy prior to polynomial correction: `useRotation=True`, `useCorrection=True`, `useExtraCorrection=False`, `g=9.81`, `plotEnergies=True`
 - Figure 9: Corrected specific energy plot: `useRotation=True`, `useCorrection=True`, `useExtraCorrection=True`, `g=9.81`, `plotEnergies=True`
-- Figure 10: Excerpt of specific energy plot: same as Figure 9, but then uncommenting line 11: `beginIndex, eindIndex = 12626, 13386`
-- Figure 11: Reconstructed path `useRotation=True`, `useCorrection=True`, `plot2DPath=True`
+- Figure 10: Excerpt of specific energy plot: same as Figure 9, but then uncommenting line 11: `beginIndex, eindIndex = 12623, 13387`
+- Figure 11: Reconstructed path of excerpt: `beginIndex, eindIndex = 12623, 13387`, `useRotation=True`, `useCorrection=True`, `plot2DPath=True`
 
 ## Citation
 

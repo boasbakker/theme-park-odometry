@@ -8,7 +8,7 @@ beginIndex = 7000 # From which index does the ride start?
 eindIndex = 17500 # At which index does the ride end? (0 to include every measurement)
 
 # A nice excerpt from Finn's measurements:
-beginIndex, eindIndex = 12626, 13386
+# beginIndex, eindIndex = 12623, 13387
 
 # Period pendulum ship = 7.61
 
@@ -26,9 +26,9 @@ plotCalculatedVelocities = False # Should the velocity be in a separate graph?
 plotAcceleration = False # Should the acceleration be plotted? (for raw rotation: set rotation=False. useCorrection=False, and g=0)
 plotAbsVelocity = False # Should the calculated absolute velocity be plotted?
 plotAbsAcceleration = False # Should the absolute acceleration be plotted?
-plotEnergies = False # Should the total energy be plotted?
+plotEnergies = True # Should the total energy be plotted?
 plotOrientation = False # Should the phone orientation (according to Phyphox) be shown?
-plot2DPath = True
+plot2DPath = False
 plotCalculatedRadii = False
 
 
@@ -389,10 +389,12 @@ if plot2DPath:
 
     path2Dplot = plt.figure(figsize=(10, 6))
     plt.scatter(dList, zList, label='Calculated Positions', color='green', alpha=0.5, rasterized=True, linewidth=0)
+    # plt.plot(dList, zList, label='Calculated Positions', color='green', rasterized=True)
     plt.plot(dTest, fitHeights, color='black', linestyle='--', label=('Circular Fit, r = ' + str(round(radius, 1)) + ' m'), rasterized=True)
 
     plt.xlabel("$x$ [m]")
-    plt.ylabel("$Height$ [m]")
+    plt.ylabel("Height [m]")
+    plt.axis('equal')
     legend = plt.legend(markerscale=3)
 
     for handle in legend.legend_handles:

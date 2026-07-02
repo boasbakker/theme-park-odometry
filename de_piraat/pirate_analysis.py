@@ -8,7 +8,7 @@ begin_index = 7000 # From which index does the ride start?
 end_index = 17500 # At which index does the ride end? (0 to include every measurement)
 
 # A nice excerpt from Finn's measurements:
-# begin_index, end_index = 12623, 13387
+begin_index, end_index = 12623, 13387
 
 # Period pendulum ship = 7.61
 
@@ -20,15 +20,15 @@ rounding_decimals = 8
 
 use_rotation = True # Should the inverse phone rotation be used?
 use_correction = True # Should corrections be applied so that the start position equals the end position?
-use_extra_correction = True # Should the sixth-degree polynomial be used for extra correction of the potential energy drift?
+use_extra_correction = False # Should the sixth-degree polynomial be used for extra correction of the potential energy drift?
 plot_calculated_positions = False # Should a graph of the positions be created?
 plot_calculated_velocities = False # Should the velocity be in a separate graph?
 plot_acceleration = False # Should the acceleration be plotted? (for raw rotation: set rotation=False. use_correction=False, and g=0)
 plot_abs_velocity = False # Should the calculated absolute velocity be plotted?
 plot_abs_acceleration = False # Should the absolute acceleration be plotted?
-plot_energies = True # Should the total energy be plotted?
+plot_energies = False # Should the total energy be plotted?
 plot_orientation = False # Should the phone orientation (according to Phyphox) be shown?
-plot_2d_path = False
+plot_2d_path = True
 plot_calculated_radii = False
 
 
@@ -390,9 +390,9 @@ if plot_2d_path:
     path2Dplot = plt.figure(figsize=(10, 6))
     plt.scatter(d_list, z_list, label='Calculated Positions', color='green', alpha=0.5, rasterized=True, linewidth=0)
     # plt.plot(d_list, z_list, label='Calculated Positions', color='green', rasterized=True)
-    plt.plot(d_test, fit_heights, color='black', linestyle='--', label=('Circular Fit, r = ' + str(round(radius, 1)) + ' m'), rasterized=True)
+    plt.plot(d_test, fit_heights, color='black', linestyle='--', label=('Circular Fit, $r = ' + str(round(radius, 1)) + '$ m'), rasterized=True)
 
-    plt.xlabel("$x$ [m]")
+    plt.xlabel("$d$ [m]")
     plt.ylabel("Height [m]")
     plt.axis('equal')
     legend = plt.legend(markerscale=3)

@@ -79,9 +79,9 @@ The `de_piraat/` directory contains the main analysis script (`pirate_analysis.p
  - `plot_calculated_radii`: Function which roughly calculates the radius of the swinging motion based on velocity and acceleration.
 
 ##### Settings for plots in paper
-- Figure 6: Raw proper acceleration: `use_rotation=False`, `use_correction=False`, `g=0`, `plot_acceleration=True`
-- Figure 7: Raw orientation: `plot_orientation=True`
-- Figure 8: Specific gravitional energy prior to polynomial correction: `use_rotation=True`, `use_correction=True`, `use_extra_correction=False`, `g=9.81`, `plot_energies=True`
-- Figure 9: Corrected specific energy plot: `use_rotation=True`, `use_correction=True`, `use_extra_correction=True`, `g=9.81`, `plot_energies=True`
-- Figure 10: Excerpt of specific energy plot: same as Figure 9, but then uncommenting line 11: `begin_index, end_index = 12623, 13387`
-- Figure 11: Reconstructed path of excerpt: `begin_index, end_index = 12623, 13387`, `use_rotation=True`, `use_correction=True`, `plot_2d_path=True`
+- Figure 8: Raw proper acceleration: `use_rotation=False`, `use_correction=False`, `g=0`, `plot_acceleration=True`
+- Figure 9: Raw orientation: `plot_orientation=True`
+- Figure 10: Specific gravitional energy prior to polynomial correction: `use_rotation=True`, `use_correction=True`, `use_extra_correction=False`, `g=9.81`, `plot_energies=True`
+- Figure 11: Corrected specific energy plot: `use_rotation=True`, `use_correction=True`, `use_extra_correction=True`, `g=9.81`, `plot_energies=True`
+- Figure 12: Excerpt of specific energy plot: same as Figure 9, but then uncommenting line 11: `begin_index, end_index = 12623, 13387`
+- Figure 13: Reconstructed path of excerpt: `begin_index, end_index = 12623, 13387`, `use_rotation=True`, `use_correction=True`, `plot_2d_path=True`
